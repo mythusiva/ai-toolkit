@@ -1,0 +1,35 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent",
+        "hooks": [
+          { "type": "command", "command": "bash \"$HOME/.claude/hooks/delegate-mark.sh\" start" },
+          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" block-nested" },
+          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" cap-model" }
+        ]
+      },
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" drift" }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash \"$HOME/.claude/hooks/delegate-mark.sh\" stop" }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "if [ -f \"$HOME/.claude/lean-speak.on\" ]; then cat \"$HOME/.claude/prompts/lean-speak-style.md\"; fi" },
+          { "type": "command", "command": "cat \"$HOME/.claude/prompts/delegation-check.md\"" }
+        ]
+      }
+    ]
+  }
+}
