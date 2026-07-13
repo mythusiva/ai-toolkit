@@ -15,5 +15,7 @@ case "$1" in
          tier=$(printf '%s' "$in" | jq -r 'if has("agent_id") then "L2" else "L1" end' 2>/dev/null)
          mktemp "$dir/d.${sid}.${tier}.${m}.XXXXXX" >/dev/null ;;
   stop)  f=$(ls "$dir"/d."${sid}".* 2>/dev/null | head -1)   # only this session's markers
-         [ -n "$f" ] && rm -f "$f" ;;
+         [ -n "$f" ] && rm -f "$f"
+         mkdir -p "$HOME/.claude/verify-pending.d"           # worker finished -> Stop hook demands verification evidence
+         touch "$HOME/.claude/verify-pending.d/$sid" ;;
 esac

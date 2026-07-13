@@ -1,0 +1,63 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "deepseek": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "DeepSeek",
+      "options": {
+        "baseURL": "https://api.deepseek.com/v1"
+      },
+      "models": {
+        "deepseek-v4-flash-free": {
+          "name": "DeepSeek V4 Flash Free"
+        }
+      }
+    },
+    "llama.cpp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "llama-server (local)",
+      "options": {
+        "baseURL": "http://127.0.0.1:8080/v1"
+      },
+      "models": {
+        "qwen-3.5-4b": {
+          "name": "Qwen 3.5 4B (local)",
+          "limit": {
+            "context": 16384,
+            "output": 8192
+          }
+        }
+      }
+    }
+  },
+  "model": "deepseek/deepseek-v4-flash-free",
+
+  // Host = plan + research only. No mutations, no command execution.
+  // Every change or command run is a delegated Agent unit.
+  "permission": {
+    "edit": "deny",
+    "bash": "deny"
+  },
+
+  // Worker agent: full tool access for implementing changes, running builds/tests, verification
+  "agent": {
+    "general": {
+      "description": "General-purpose worker agent. Use for implementing changes, running builds, tests, git, migrations, screenshots, and verification.",
+      "mode": "subagent",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow"
+      }
+    }
+  },
+
+  "instructions": ["/Users/ms/.config/opencode/prompts/delegation.md"],
+
+  "command": {
+    "goal": {
+      "template": "You have been given the following goal: $ARGUMENTS\n\nYour job is to:\n1. Create a clear, step-by-step plan for achieving this goal\n2. Present the plan to me for confirmation\n3. Execute each step methodically once I approve\n4. Verify each step before moving to the next\n5. Summarize what was accomplished at the end\n\nBe thorough and precise. If anything is unclear, ask clarifying questions before proceeding.",
+      "description": "Set a session goal and begin working toward it",
+      "subtask": true
+    }
+  }
+}

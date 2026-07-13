@@ -10,9 +10,15 @@
         ]
       },
       {
-        "matcher": "Bash|Edit|Write",
+        "matcher": "Bash",
         "hooks": [
           { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" drift" }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" readonly" }
         ]
       }
     ],
@@ -20,6 +26,13 @@
       {
         "hooks": [
           { "type": "command", "command": "bash \"$HOME/.claude/hooks/delegate-mark.sh\" stop" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" stop-verify" }
         ]
       }
     ],
