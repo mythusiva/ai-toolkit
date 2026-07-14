@@ -32,12 +32,9 @@
   },
   "model": "deepseek/deepseek-v4-flash-free",
 
-  // Host = plan + research only. No mutations, no command execution.
-  // Every change or command run is a delegated Agent unit.
-  "permission": {
-    "edit": "deny",
-    "bash": "deny"
-  },
+  // Host is unrestricted (may read, run commands, edit/write) but must always
+  // present a plan first and prefers delegation. Scale/parallel/long/verify work
+  // goes to Agent units; small single-file things can be done inline.
 
   // Worker agent: full tool access for implementing changes, running builds/tests, verification
   "agent": {

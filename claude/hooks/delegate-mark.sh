@@ -16,6 +16,10 @@ case "$1" in
          mktemp "$dir/d.${sid}.${tier}.${m}.XXXXXX" >/dev/null ;;
   stop)  f=$(ls "$dir"/d."${sid}".* 2>/dev/null | head -1)   # only this session's markers
          [ -n "$f" ] && rm -f "$f"
+         # Read-only research agents (Explore/Plan) mutate nothing -> skip the verify gate for them.
+         # agent_type may be absent on SubagentStop; if so we fall through and gate as before.
+         at=$(printf '%s' "$in" | jq -r '.agent_type // .tool_input.subagent_type // .subagent_type // ""' 2>/dev/null)
+         case "$at" in Explore|Plan) exit 0 ;; esac
          mkdir -p "$HOME/.claude/verify-pending.d"           # worker finished -> Stop hook demands verification evidence
          touch "$HOME/.claude/verify-pending.d/$sid" ;;
 esac
