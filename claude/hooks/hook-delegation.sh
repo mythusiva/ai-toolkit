@@ -143,7 +143,7 @@ case "$1" in
     [ -f "$vdir/$sid" ] || exit 0
     rm -f "$vdir/$sid"                                   # one block per batch of returns
     [ "$(printf '%s' "$in" | jq -r '.stop_hook_active // false')" = "true" ] && exit 0
-    jq -n '{decision:"block", reason:"VERIFY GATE: workers returned this session. Host cannot run checks itself (plan+research only) -- verification is its own delegated Agent unit. For EACH delegated unit, cite the verify-unit evidence (lint output, diff read, proving command result, screenshot vs design). Unverified or failing -> dispatch a verify or fix unit now. All verified -> restate the evidence, one line per unit, then stop."}'
+    jq -n '{decision:"block", reason:"VERIFY GATE: workers returned this session. Verify EACH delegated unit -- host MAY run the checks inline (re-lint files, read diff, run proving command, screenshot vs design) or delegate a verify unit; independent verification wants a delegated unit. Cite the evidence per unit. Unverified or failing -> verify or dispatch a fix now. All verified -> restate evidence, one line/unit, then stop."}'
     ;;
 esac
 exit 0
