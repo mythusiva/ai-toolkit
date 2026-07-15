@@ -15,7 +15,8 @@ case "$1" in
          tier=$(printf '%s' "$in" | jq -r 'if has("agent_id") then "L2" else "L1" end' 2>/dev/null)
          mktemp "$dir/d.${sid}.${tier}.${m}.XXXXXX" >/dev/null ;;
   stop)  f=$(ls "$dir"/d."${sid}".* 2>/dev/null | head -1)   # only this session's markers
-         [ -n "$f" ] && rm -f "$f"
+         [ -z "$f" ] && exit 0                                # orphan stop (no in-flight start) -> not a real delegation, no verify gate
+         rm -f "$f"
          # Read-only research agents (Explore/Plan) mutate nothing -> skip the verify gate for them.
          # agent_type may be absent on SubagentStop; if so we fall through and gate as before.
          at=$(printf '%s' "$in" | jq -r '.agent_type // .tool_input.subagent_type // .subagent_type // ""' 2>/dev/null)

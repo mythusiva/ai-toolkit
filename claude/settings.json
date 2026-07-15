@@ -6,7 +6,14 @@
         "hooks": [
           { "type": "command", "command": "bash \"$HOME/.claude/hooks/delegate-mark.sh\" start" },
           { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" block-nested" },
+          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" plan-gate" },
           { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" cap-model" }
+        ]
+      },
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" plan-mark" }
         ]
       },
       {
@@ -40,7 +47,8 @@
       {
         "hooks": [
           { "type": "command", "command": "if [ -f \"$HOME/.claude/lean-speak.on\" ]; then cat \"$HOME/.claude/prompts/lean-speak-style.md\"; fi" },
-          { "type": "command", "command": "cat \"$HOME/.claude/prompts/delegation-check.md\"" }
+          { "type": "command", "command": "cat \"$HOME/.claude/prompts/delegation-check.md\"" },
+          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" plan-clear" }
         ]
       }
     ]

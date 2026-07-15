@@ -49,8 +49,8 @@ case "$1" in
           printf '%s' "$p" | grep -qiE 'verbatim|no placeholder|do not summar|do not truncat|every line|in full' || miss="${miss:+$miss; }data-return unit without a verbatim/no-placeholder guard"
         fi
         # Substantial work handed to haiku without a full spec is the retry-loop trigger.
-        # Auto-escalate to fast opus (effort low, set below) -- one-shot beats a haiku retry loop.
-        [ -n "$miss" ] && [ "${#p}" -ge 500 ] && resolved="opus" && escalated="1"
+        # Auto-escalate to sonnet (near-opus quality, ~0.6x opus cost) -- one-shot beats a haiku retry loop.
+        [ -n "$miss" ] && [ "${#p}" -ge 500 ] && resolved="sonnet" && escalated="1"
         ;;
     esac
     case "$resolved" in
@@ -70,30 +70,66 @@ case "$1" in
     atype=$(printf '%s' "$in" | jq -r '.tool_input.subagent_type // "claude"')
     task=$(printf '%s' "$in" | jq -r '.tool_input.prompt // ""' | tr '\n\t' '  ' | head -c 80)
     [ -n "$tok" ] && printf '%s | %s\n' "$atype" "$task" > "$cdir/roster/$tok"
+    # Only inject the verbose peer-board block when another agent is live in this
+    # session roster (count includes our own entry, so >=2 => a peer exists). Solo
+    # delegations skip it cleanly -- telling a lone agent to coordinate is noise.
+    # Limitation: the first agent of a parallel batch may see only itself and skip the
+    # block; it still writes an outbox later peers can read. Upgrade to a barrier only if
+    # coordinated parallel batches actually need every member boarded.
+    peers=$(find "$cdir/roster" -type f 2>/dev/null | wc -l | tr -d ' ')
+    haspeers=""; [ "${peers:-0}" -ge 2 ] && haspeers="1"
     warn=""
     [ -n "$miss" ] && [ -z "$escalated" ] && warn=" THIN SPEC ($miss): a haiku leaf needs exact files, expected result, and a proving check in its prompt. If this unit is non-trivial, treat its output as untrusted and respawn with a full spec."
     defnote=""
-    [ -z "$m" ] && defnote="Model defaulted to haiku (leaf; cannot delegate). Too weak or a task dragging through retries -> model:opus (effort auto-set to low = fast, one-shot); genuine multi-file cross-file work -> model:sonnet; hardest only -> opus medium+/inherit. Data-return units (dump/quote/list) must demand verbatim output with NO placeholders/summarizing; treat any summarized or placeholdered return as lossy and re-request or cross-check. Load-bearing research claims must quote source (file:line); verify against the actual source before acting on them."
-    [ -n "$escalated" ] && defnote="Auto-escalated haiku -> opus (effort low) because the spec was thin ($miss) on a substantial prompt (>=500 chars) -- one-shot opus beats a haiku retry loop. To keep it on haiku, tighten the spec (exact files + a proving check); to control the tier, pass model explicitly."
+    [ -z "$m" ] && defnote="Model->haiku (leaf, cannot delegate). Weak/retry-looping or multi-file reasoning -> model:sonnet (near-opus, ~0.6x cost); hardest/money/security/concurrency -> opus medium+/inherit (opus auto effort:low). Data-return (dump/quote/list): demand verbatim, NO placeholders/summarizing; lossy returns are suspect, re-request or cross-check. Research claims: quote source file:line, verify before acting."
+    [ -n "$escalated" ] && defnote="Auto-escalated haiku -> sonnet: thin spec ($miss) on a >=500-char prompt; one-shot sonnet beats a haiku retry loop. Keep it on haiku by tightening the spec (exact files + proving check); pass model explicitly to control the tier."
     eff=$(printf '%s' "$in" | jq -r '.tool_input.effort // ""')
     case "$resolved" in *[Oo]pus*) [ -z "$eff" ] && eff="low" ;; esac   # opus defaults to low reasoning effort (fast); explicit effort passes through
     # jq program below is wrapped in bash single quotes: it must contain NO single quote
     # (apostrophes included) or bash quoting breaks. Keep the injected help text quote-free.
     printf '%s' "$in" | jq -c \
       --arg model "$resolved" --arg tok "$tok" --arg cdir "$cdir" --arg atype "$atype" \
-      --arg note "$defnote" --arg warn "$warn" --arg eff "$eff" '
+      --arg note "$defnote" --arg warn "$warn" --arg eff "$eff" --arg haspeers "$haspeers" '
       (.tool_input.prompt // "") as $p |
-      ($p + "\n\n--- PEER COMMS (session-shared, always-on) ---\n"
-          + "You are agent [" + $tok + "] (type: " + $atype + "). Other agents this session collaborate through a shared board.\n"
-          + "Board: " + $cdir + "\n"
-          + "  - YOUR outbox (write ONLY here; you are the sole writer): " + $cdir + "/msgs/" + $tok + ".md\n"
-          + "    append a note:  echo YOUR_MESSAGE >> " + $cdir + "/msgs/" + $tok + ".md\n"
-          + "  - PEERS: read all with  cat " + $cdir + "/msgs/*.md   |   who is live:  cat " + $cdir + "/roster/*\n"
-          + "Coordinate freely: cross-check assumptions, share partial results, align on shared interfaces. Address a peer by their [token].\n"
-          + "No push notifications -- re-read msgs/*.md when you need the latest from a peer. NEVER write a file that is not your own outbox.") as $np |
+      (if $haspeers == "1" then
+        ($p + "\n\n--- PEER BOARD (" + $cdir + ") ---\n"
+          + "You are [" + $tok + "] (" + $atype + "). Coordinate with session peers via a shared board.\n"
+          + "Your outbox (write ONLY this, sole writer): msgs/" + $tok + ".md  ->  echo MSG >> " + $cdir + "/msgs/" + $tok + ".md\n"
+          + "Peers: cat " + $cdir + "/msgs/*.md (all notes) | cat " + $cdir + "/roster/* (who is live). Address by [token].\n"
+          + "Cross-check assumptions, share partials, align interfaces. No notifs -> re-read for latest. NEVER write any file but your own outbox.")
+       else $p end) as $np |
       {hookSpecificOutput:{hookEventName:"PreToolUse",
         updatedInput:(.tool_input + {model:$model, prompt:$np} + (if $eff=="" then {} else {effort:$eff} end)),
         additionalContext:($note + $warn)}}'
+    ;;
+  plan-clear)
+    # UserPromptSubmit: each new user prompt wipes plan approval -> per-turn re-plan.
+    rm -f "$HOME/.claude/plan-approved.d/$sid" 2>/dev/null
+    ;;
+  plan-mark)
+    # PreToolUse on ExitPlanMode: reaching plan-exit means a plan was presented.
+    # User approval is enforced natively by plan mode; the marker only records "a plan happened this turn".
+    mkdir -p "$HOME/.claude/plan-approved.d"
+    touch "$HOME/.claude/plan-approved.d/$sid" 2>/dev/null
+    ;;
+  plan-gate)
+    # Main session only: block fan-out/mutating delegation until a plan was approved this turn.
+    # Read-only single-unit research passes without a plan (no quality gain, only friction).
+    [ "$is_sub" = "true" ] && exit 0
+    pdir="$HOME/.claude/plan-approved.d"
+    find "$pdir" -type f -mmin +240 -delete 2>/dev/null
+    [ -f "$pdir/$sid" ] && exit 0                        # plan approved this turn
+    p=$(printf '%s' "$in" | jq -r '.tool_input.prompt // ""')
+    iso=$(printf '%s' "$in" | jq -r '.tool_input.isolation // ""')
+    gate=""
+    # mutation-intent heuristic on the delegation prompt; tighten the regex only if it misfires.
+    printf '%s' "$p" | grep -qiE 'edit|write|creat|implement|fix|refactor|migrat|delete|remove|rename|install|commit|generat|\bbuild|mutat|\badd |\bupdate' && gate="1"
+    [ "$iso" = "worktree" ] && gate="1"
+    # Strict: substantial work needs a plan even when read-only. Only a short, single
+    # lookup/research unit passes planless. Raise the threshold if trivial reads get gated.
+    [ "${#p}" -ge 500 ] && gate="1"
+    [ -z "$gate" ] && exit 0                             # short read-only lookup only: allow planless
+    jq -n '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"deny",permissionDecisionReason:"PLAN GATE: no plan approved this turn (mutating|worktree|>=500-char). First gather requirements -- ambiguity or invented assumption -> AskUserQuestion (1-3) before planning. Then ExitPlanMode with a SHORT plan (requirements + assumptions, units + models + proving checks) for user approval before dispatch. Only a short read-only lookup passes planless."}}'
     ;;
   stop-verify)
     # Closes the quality loop: a turn cannot end with unverified worker output.
