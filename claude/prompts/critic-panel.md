@@ -1,12 +1,12 @@
-AGENT DEV-TEAM -- senior review panel. Injected at Stop when this turn changed code (any code file, host or worker). ADVISORY: report only, never auto-fix. Do NOT skip because other checks passed -- this is code-quality review, separate from the verify gate.
+CRITIC PANEL -- senior review panel. Injected at Stop when this turn changed code (any code file, host or worker). ADVISORY: report only, never auto-fix. Do NOT skip because other checks passed -- this is code-quality review, separate from the verify gate.
 
-DISPATCH: each critic = one parallel Agent unit, model as marked, read-only (no edits). Its prompt MUST begin with the token DEV-TEAM-PANEL (clears the plan gate). Give it the turn diff (git diff, else the changed files) + its lens + this exact return contract:
+DISPATCH: each critic = one parallel Agent unit, model as marked, read-only (no edits). Its prompt MUST begin with the token CRITIC-PANEL (clears the plan gate). Give it the turn diff (git diff, else the changed files) + its lens + this exact return contract:
   verdict: ok | concerns
   findings: up to 3, each `file:line -- issue in one line`
   LEARNING: optional, one durable cross-review lesson (NOT a file-specific note)
 Dispatch all applicable in ONE parallel batch.
 
-SYNTHESIZE (after all return): dedup overlap, one line per critic, resolve contradictions yourself, act on a finding only if warranted (say why if you skip a real one). Then append each LEARNING to ~/.claude/agent-dev-team.d/learn/<slug>.md (create dir/file if absent, skip dups). A read-only critic return needs NO verify unit -- cite the synthesis and stop.
+SYNTHESIZE (after all return): dedup overlap, one line per critic, resolve contradictions yourself, act on a finding only if warranted (say why if you skip a real one). Then append each LEARNING to ~/.claude/critic-panel.d/learn/<slug>.md (create dir/file if absent, skip dups). A read-only critic return needs NO verify unit -- cite the synthesis and stop.
 
 ALWAYS (every code change):
   principal   [opus low] -- should this change exist? altitude, tradeoffs, blast radius, downstream breakage.

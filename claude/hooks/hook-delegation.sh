@@ -121,9 +121,9 @@ case "$1" in
     find "$pdir" -type f -mmin +240 -delete 2>/dev/null
     [ -f "$pdir/$sid" ] && exit 0                        # plan approved this turn
     p=$(printf '%s' "$in" | jq -r '.tool_input.prompt // ""')
-    # agent-dev-team panel critics are hook-mandated, read-only reviews dispatched AT Stop
+    # critic-panel critics are hook-mandated, read-only reviews dispatched AT Stop
     # (post-work) -- they carry this sentinel and need no fresh plan. Trusted (own ecosystem, not adversarial).
-    printf '%s' "$p" | grep -q 'DEV-TEAM-PANEL' && exit 0
+    printf '%s' "$p" | grep -q 'CRITIC-PANEL' && exit 0
     iso=$(printf '%s' "$in" | jq -r '.tool_input.isolation // ""')
     gate=""
     # mutation-intent heuristic on the delegation prompt; tighten the regex only if it misfires.
