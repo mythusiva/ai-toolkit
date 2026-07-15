@@ -9,10 +9,12 @@ Personal Claude Code config: hooks, prompts, and commands that mirror the
 claude/
   settings.json          # hook wiring — the source of truth
   hooks/
-    delegate-mark.sh      # tracks in-flight delegations per session/tier/model
-    hook-delegation.sh    # drift nudge + haiku-leaf enforcement + model cap
+    delegate-mark.sh        # tracks in-flight delegations per session/tier/model
+    hook-delegation.sh      # drift nudge + haiku-leaf enforcement + model cap
+    hook-agent-dev-team.sh  # senior review panel: fires at Stop on code changes
   prompts/
     delegation-check.md   # injected every turn (via UserPromptSubmit hook)
+    agent-dev-team.md     # review-panel roster (cat by the dev-team Stop hook)
     lean-speak-style.md   # injected every turn while lean-speak is toggled on
   commands/
     lean-speak.md         # /lean-speak toggle
@@ -24,6 +26,11 @@ claude/
   defaults spawned agents to `haiku`, and enforces a delegation tree whose leaves
   (haiku agents) can't delegate further. `hooks/hook-delegation.sh` gates the
   `Agent` tool; `hooks/delegate-mark.sh` bookkeeps under `~/.claude/*.d`.
+- **Agent dev-team** — on any code change, a senior review panel fires at Stop:
+  parallel read-only critics (principal, clean-arch, security, correctness +
+  conditional backend/frontend/test/perf/api) review the diff and report.
+  Advisory (never auto-fixes); each critic accumulates durable lessons under
+  `~/.claude/agent-dev-team.d/learn/`. Roster in `prompts/agent-dev-team.md`.
 - **lean-speak** — terse, token-lean reply style. Off by default; `/lean-speak`
   toggles it by creating/removing `~/.claude/lean-speak.on`.
 

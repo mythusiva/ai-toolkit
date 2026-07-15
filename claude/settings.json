@@ -4,51 +4,102 @@
       {
         "matcher": "Agent",
         "hooks": [
-          { "type": "command", "command": "bash \"$HOME/.claude/hooks/delegate-mark.sh\" start" },
-          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" block-nested" },
-          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" plan-gate" },
-          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" cap-model" }
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/delegate-mark.sh\" start"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" block-nested"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" plan-gate"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" cap-model"
+          }
         ]
       },
       {
         "matcher": "ExitPlanMode",
         "hooks": [
-          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" plan-mark" }
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" plan-mark"
+          }
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" drift" }
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" drift"
+          }
         ]
       },
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" readonly" }
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" readonly"
+          }
         ]
       }
     ],
     "SubagentStop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash \"$HOME/.claude/hooks/delegate-mark.sh\" stop" }
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/delegate-mark.sh\" stop"
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" stop-verify" }
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" stop-verify"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/hook-agent-dev-team.sh\" panel"
+          }
         ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [
-          { "type": "command", "command": "if [ -f \"$HOME/.claude/lean-speak.on\" ]; then cat \"$HOME/.claude/prompts/lean-speak-style.md\"; fi" },
-          { "type": "command", "command": "cat \"$HOME/.claude/prompts/delegation-check.md\"" },
-          { "type": "command", "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" plan-clear" }
+          {
+            "type": "command",
+            "command": "if [ -f \"$HOME/.claude/lean-speak.on\" ]; then cat \"$HOME/.claude/prompts/lean-speak-style.md\"; fi"
+          },
+          {
+            "type": "command",
+            "command": "cat \"$HOME/.claude/prompts/delegation-check.md\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/hook-delegation.sh\" plan-clear"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/hook-agent-dev-team.sh\" mark"
+          }
         ]
       }
     ]

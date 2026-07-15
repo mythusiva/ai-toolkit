@@ -29,6 +29,7 @@ case "$1" in
     at=${at//[^A-Za-z0-9_-]/_}
     find "$dir" -type f -mmin +120 -delete 2>/dev/null   # reap stragglers from a missed cleanup (interior agent >2h loses its marker; acceptable)
     [ -f "$dir/${sid}__${at}" ] && exit 0                # caller is a sonnet/opus interior agent: may delegate
+    rm -f "$(ls -t "$HOME/.claude/delegate-active.d"/d."$sid".* 2>/dev/null | head -1)"  # deny -> agent never runs -> drop the active-marker start just created (else it orphans, status bar shows phantom agents)
     jq -n '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"deny",permissionDecisionReason:"Haiku (leaf) agents may not delegate. Complete this work yourself. Only sonnet/opus/inherit agents decompose further; delegation stops at haiku."}}'
     ;;
   cap-model)
@@ -120,6 +121,9 @@ case "$1" in
     find "$pdir" -type f -mmin +240 -delete 2>/dev/null
     [ -f "$pdir/$sid" ] && exit 0                        # plan approved this turn
     p=$(printf '%s' "$in" | jq -r '.tool_input.prompt // ""')
+    # agent-dev-team panel critics are hook-mandated, read-only reviews dispatched AT Stop
+    # (post-work) -- they carry this sentinel and need no fresh plan. Trusted (own ecosystem, not adversarial).
+    printf '%s' "$p" | grep -q 'DEV-TEAM-PANEL' && exit 0
     iso=$(printf '%s' "$in" | jq -r '.tool_input.isolation // ""')
     gate=""
     # mutation-intent heuristic on the delegation prompt; tighten the regex only if it misfires.
@@ -129,6 +133,7 @@ case "$1" in
     # lookup/research unit passes planless. Raise the threshold if trivial reads get gated.
     [ "${#p}" -ge 500 ] && gate="1"
     [ -z "$gate" ] && exit 0                             # short read-only lookup only: allow planless
+    rm -f "$(ls -t "$HOME/.claude/delegate-active.d"/d."$sid".* 2>/dev/null | head -1)"  # deny -> agent never runs -> drop the active-marker start just created (else it orphans, status bar shows phantom agents)
     jq -n '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"deny",permissionDecisionReason:"PLAN GATE: no plan approved this turn (mutating|worktree|>=500-char). First gather requirements -- ambiguity or invented assumption -> AskUserQuestion (1-3) before planning. Then ExitPlanMode with a SHORT plan (requirements + assumptions, units + models + proving checks) for user approval before dispatch. Only a short read-only lookup passes planless."}}'
     ;;
   stop-verify)

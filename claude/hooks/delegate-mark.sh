@@ -13,6 +13,7 @@ case "$1" in
          # tier: L1 = spawned by main, L2 = spawned by any subagent (nested). Depth >2 folds into L2
          # (hook stdin exposes no parent chain/self-id to chain true depth; upgrade only if harness adds a SubagentStart parent link).
          tier=$(printf '%s' "$in" | jq -r 'if has("agent_id") then "L2" else "L1" end' 2>/dev/null)
+         find "$dir" -type f -mmin +120 -delete 2>/dev/null   # backstop: reap orphans from ANY unpaired start (user-denied prompt, crash, deny branch we did not patch); matches delegator.d reaper. Deny branches also rm instantly for status-bar UX.
          mktemp "$dir/d.${sid}.${tier}.${m}.XXXXXX" >/dev/null ;;
   stop)  f=$(ls "$dir"/d."${sid}".* 2>/dev/null | head -1)   # only this session's markers
          [ -z "$f" ] && exit 0                                # orphan stop (no in-flight start) -> not a real delegation, no verify gate
