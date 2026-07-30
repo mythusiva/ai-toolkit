@@ -1,0 +1,23 @@
+- String-concatenated SQL at a trust boundary is BOTH security + correctness; parameterized queries fix injection and null/undefined malformed-query in one move.
+- When a clamp fixes a display symptom (Math.min on a render-time index) but leaves the underlying state var unclamped, the desync is only deferred — it resurfaces as a silent auto-jump when the collection grows back. Clamp the source of truth, not just the read.
+- `[ -s file ]` is NOT equivalent to `[ -n "$(cat file)" ]`: `-s` tests size via stat and passes on files the caller can't read, so a size guard can green-light a downstream reader that then fails on permissions.
+- Swapping a synchronous state update for an unawaited async one can break ordering (a later reader sees pre-update state) and readiness gating (a ready flag set beside the call, not in .then, fires before its state exists) — but VERIFY against the library source: some clients apply cache synchronously up to the first yield, refuting both.
+- When a rename introduces a sentinel token, confirm emit site and match site use the identical literal AND that no near-variant (space vs hyphen) elsewhere can substring-collide — grep treats `-` as literal, so hyphen/space variants are safely distinct.
+- Swapping a bare-string HttpException(msg) for structured HttpException({messageCode,message}): existing toThrow(new HttpException(msg)) assertions keep passing (Nest initMessage resolves .message from response.message), so a green suite does NOT prove callers reading .response/messageCode were updated — check those callers separately.
+
+- For any "hidden native view that drives a ceremony" pattern, the correctness question isn't just does-error-reset-state but is-there-a-NON-callback exit — a full-screen, touch-capturing, opaque overlay whose only teardown lives inside the library's own success/error callbacks strands the user if the library goes silent. Demand a timeout OR a user-dismissable (Cancel) overlay, and reset the state on screen focus.
+
+- When a native error's user-facing text is matched by substring across a JS bridge, verify WHICH field the bridge forwards vs. where the library stores that text — a Kotlin `override val message` can be null while the meaningful string sits in a sibling field (`desc`) and the type carries a stable `code` constant. Match on the code, not a message substring.
+
+- For a native cancel/error code matched by substring across an RN bridge, the code PREFIX can be platform-specific for the same logical error (Kotlin `K110002` vs Swift `S110002` passkeyCancelled; `S110001`=passkeyFailed on iOS sim with no authenticator) — confirm each platform SDK's actual prefix in its source and match ALL variants, don't assume a shared numeric code with one prefix.
+- A native-bridge method that resolves-with-null on a value it cannot produce (vs rejecting) collapses a distinct failure class into the callers generic catch — assert the load-bearing field at the bridge boundary and reject with a specific code.
+
+- When an irreversible side-effect (IdP credential creation) is relocated from the server into a client-run ceremony, any server-side validation that used to gate it becomes a post-hoc check that can only orphan. Porting the code isn't enough — re-establish the ordering invariant it protected (move the gate/resolution pre-ceremony, or add a compensating delete), else "doomed request" now means "reverse-drift orphan".
+
+- Before calling "findOne without relations -> NPE on relation access", check the entity for `eager: true` — an eager OneToOne is loaded regardless of the relations arg, so the only real NPE is a missing ROW, not an unrequested relation. (An added relations:[...] on an eager relation is redundant-but-harmless.)
+
+- eager:true relation means findOneBy and findOne({relations}) load the SAME data — swapping one for the other (or adding a relations arg) is a no-op query-wise, so it does NOT widen blast radius even on a shared method.
+
+- "No client writes column X" is NOT proven by grepping frontend call sites — a non-deprecated GraphQL input field routed through plainToClass(Entity, dto) is itself a server-side writer. Verify the WRITER path AND the DB reality (query a real row) before declaring a column dead; when both a column and a same-named JSON blob exist, which is populated is decided by the writer, not the reader.
+
+- A predicate/helper introduced into N call sites in the SAME commit is a feature landing DRY-first, NOT a behavior-preserving refactor — verify the extracted expression existed pre-diff before trusting a "pure refactor" framing; judge its correctness as new behavior.

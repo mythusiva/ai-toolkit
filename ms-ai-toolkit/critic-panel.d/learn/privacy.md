@@ -1,0 +1,1 @@
+- [payment-provider-service] "invoice payload" privacy reviews MUST follow EVERY eagerly-loaded payment-method relation, not just the obviously-named one: one side may carry a provider token while the other deep-copies raw bank credentials. Trace each relation to its actual sink (SNS/Segment/Braze) and check the sanitizer whitelists by relation, not by guess.
