@@ -38,6 +38,21 @@ of them:
 | `hook-critic-panel.sh` | `PostToolUse:Edit\|Write`, `Stop` |
 | `hook-hard-requirements.sh` | `PreToolUse:EnterPlanMode\|ExitPlanMode\|AskUserQuestion`, `Stop` |
 | `cat`-ing `delegation-check.md` / `delegation-stub.md` / `ponytail-*.md` / `lean-speak-style.md` | `SessionStart`, `UserPromptSubmit` |
+| `hook-brain-recall.py` / `hook-brain-capture.py` / `brain-guard.py` | `UserPromptSubmit`, `Stop`, `SessionStart` |
+
+**The brain hooks need one extra decision, not just removal.** The plugin's copy defaults to a
+*different* database — `~/.agent-brain/brain.db`, not whatever your hand-installed copy points at.
+Leave both wired and every prompt gets two recall injections from two unrelated brains, and every
+Stop gets two nudges. Pick one:
+
+- **Keep your existing brain** (all its rows): remove the five `~/.claude` brain hook entries and
+  set `BRAIN_DB` in `settings.json` under `env` to your current database path. Also set
+  `BRAIN_STOP_EXTRA` to your org name — the packaged stoplist no longer hardcodes it.
+- **Start fresh**: remove the entries and run `brain-init.py`. Nothing to configure.
+
+Either way the `~/.claude/brain-*.py` copies become dead and can be deleted. The metrics scripts
+(`brain-health.py`, `brain-due.py`, `brain-dupes.py`) are not part of the package — keep them
+where they are if you still want them, and keep their `SessionStart` entries.
 
 Keep anything unrelated. If `statusLine` points at `~/.claude/statusline.sh`, repoint it — see
 *Status line* below. Your `~/.claude/` state carries over untouched (learnings ledger,
