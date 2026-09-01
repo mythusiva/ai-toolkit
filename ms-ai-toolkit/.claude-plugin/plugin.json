@@ -1,7 +1,7 @@
 {
   "name": "ms-ai-toolkit",
-  "version": "0.1.0",
-  "description": "Personal Claude Code workflow toolkit: manager-mode delegation gates, hard-requirement plan gates, an advisory senior-review critic panel, ponytail/lean-speak reply modes, and five investigation skills.",
+  "version": "0.2.0",
+  "description": "Personal Claude Code workflow toolkit: a shared agent-brain memory (deterministic recall on every prompt, evidence-triggered capture at Stop), manager-mode delegation gates, hard-requirement plan gates, an advisory senior-review critic panel, ponytail/lean-speak reply modes, and six investigation skills.",
   "author": {
     "name": "mythusiva"
   },

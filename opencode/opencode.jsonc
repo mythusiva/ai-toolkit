@@ -48,7 +48,12 @@
     }
   },
 
-  "instructions": ["/Users/ms/.config/opencode/prompts/delegation.md"],
+  // The brain plugin auto-loads from plugin/agent-brain.js; this is only the protocol the
+  // model reads. Set BRAIN_SCRIPTS in your shell if the engine is not beside this config.
+  "instructions": [
+    "/Users/ms/.config/opencode/prompts/delegation.md",
+    "/Users/ms/.config/opencode/prompts/agent-brain.md"
+  ],
 
   "command": {
     "goal": {

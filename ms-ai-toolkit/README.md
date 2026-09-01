@@ -16,6 +16,12 @@ Restart Claude Code, then `/plugin` to confirm it's enabled. Hooks, commands, pr
 skills wire themselves up — no `settings.json` editing, no configuration. Update later with
 `/plugin update ms-ai-toolkit@ms-ai`.
 
+One command after install, to create the agent brain:
+
+```
+python3 "$CLAUDE_PLUGIN_ROOT/brain/brain-init.py"
+```
+
 ## Already hand-installed the old `claude/` bundle? Clean up first
 
 The old README told you to `cp` scripts into `~/.claude/` and merge hook entries into
@@ -41,6 +47,9 @@ sentinels); the old `~/.claude/*.sh` and `*.md` copies are then dead and can be 
 
 | Piece | Fires on | What it does |
 |---|---|---|
+| `brain/brain-recall.py` | UserPromptSubmit | Queries the agent brain for words in your prompt and injects any hits, git-verified and labelled `[STALE]` if the file moved. Silent when it has nothing. ~45ms |
+| `brain/brain-capture.py` | Stop | If the session shows evidence of learning and the brain did not change, blocks once with the exact write commands. Evidence-triggered, at most once per session |
+| `brain/brain-guard.py` | SessionStart | ~36ms health canary. Silent unless the brain is corrupt, empty, rotting, or holding a stale work claim |
 | `hooks/hook-delegation.sh` | Agent, Bash, Edit/Write, AskUserQuestion, ExitPlanMode, Stop | Manager-mode delegation: caps sub-agent models by tier, blocks nested delegation from leaf agents, guards read-only agents, marks the ask/plan gates, and demands verification evidence at Stop |
 | `hooks/delegate-mark.sh` | Agent start / SubagentStop | Tracks in-flight sub-agents (feeds the status line and the verify gate) |
 | `hooks/hook-critic-panel.sh` | Edit/Write, Stop | If the turn changed code, blocks once and hands over the critic roster to dispatch as parallel advisory reviewers. Advisory: findings never force a fix |
@@ -53,7 +62,12 @@ SessionStart), `delegation-stub.md` (per-turn reminder), `ponytail-mode.md` /
 `ponytail-stub.md`, `lean-speak-style.md`, `critic-panel.md` (the roster), `plan-diagram.md`
 (ASCII diagram format).
 
-Skills in `skills/` load on demand, by description: `feature-deep-dive` (investigate an
+The brain is a whole subsystem with its own docs, environment variables and health command —
+see [`brain/README.md`](brain/README.md). Nothing to configure to start: it defaults to
+`~/.agent-brain/brain.db`, and the same engine drives the opencode plugin.
+
+Skills in `skills/` load on demand, by description: `agent-brain` (work *on* the brain — retire a
+wrong fact, diagnose why recall missed, claim work, restructure), `feature-deep-dive` (investigate an
 existing feature to runtime depth, not just structure), `figma-prefetch` and `figma-export`
 (read a Figma file once into a local cache / export screens + metadata),
 `google-slides-editing` (drive Slides through the Chrome DevTools MCP), and

@@ -107,6 +107,10 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/hook-critic-panel.sh\" panel"
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/brain/brain-capture.py\""
           }
         ]
       }
@@ -114,6 +118,10 @@
     "UserPromptSubmit": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/brain/brain-recall.py\""
+          },
           {
             "type": "command",
             "command": "if [ -f \"$HOME/.claude/lean-speak.on\" ]; then bash \"${CLAUDE_PLUGIN_ROOT}/hooks/emit-prompt.sh\" lean-speak-style; fi"
@@ -144,6 +152,10 @@
           {
             "type": "command",
             "command": "if [ ! -f \"$HOME/.claude/ponytail.off\" ]; then bash \"${CLAUDE_PLUGIN_ROOT}/hooks/emit-prompt.sh\" ponytail-mode; fi"
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/brain/brain-guard.py\""
           }
         ]
       }
