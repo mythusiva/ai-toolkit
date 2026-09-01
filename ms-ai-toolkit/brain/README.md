@@ -41,14 +41,16 @@ Claude Code gets it with the plugin — the hooks are already wired. Then, once:
 python3 "$CLAUDE_PLUGIN_ROOT/brain/brain-init.py"
 ```
 
-opencode auto-loads `opencode/plugin/agent-brain.js` from `~/.config/opencode/plugin/`. Point it
-at the engine and register the protocol prompt:
+opencode discovers plugins with the glob `{plugin,plugins}/*.{ts,js}` — the `.js` extension is
+load-bearing, a `.mjs` there is silently never loaded. Link the plugin and the protocol prompt,
+then point it at the engine:
 
 ```sh
-export BRAIN_SCRIPTS=~/baselane/dev/ai-toolkit/ms-ai-toolkit/brain   # skip if the repo's
-                                                                    # opencode/ dir is symlinked
-ln -s "$PWD/opencode/plugin/agent-brain.js" ~/.config/opencode/plugin/
-ln -s "$PWD/opencode/prompts/agent-brain.md" ~/.config/opencode/prompts/
+mkdir -p ~/.config/opencode/plugin ~/.config/opencode/prompts
+ln -s "$PWD/opencode/plugin/agent-brain.js"   ~/.config/opencode/plugin/
+ln -s "$PWD/opencode/prompts/agent-brain.md"  ~/.config/opencode/prompts/
+export BRAIN_SCRIPTS="$PWD/ms-ai-toolkit/brain"   # unnecessary if the repo's opencode/
+python3 "$PWD/ms-ai-toolkit/brain/brain-init.py"  # dir is itself the symlink target
 ```
 
 ## Configuration

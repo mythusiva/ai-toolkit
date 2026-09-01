@@ -38,13 +38,15 @@ status-line / local-Gemma extras: [`ms-ai-toolkit/README.md`](ms-ai-toolkit/READ
 ## Install on opencode
 
 ```
+mkdir -p ~/.config/opencode/plugin ~/.config/opencode/prompts
 ln -s "$PWD/opencode/plugin/agent-brain.js"   ~/.config/opencode/plugin/
 ln -s "$PWD/opencode/prompts/agent-brain.md"  ~/.config/opencode/prompts/
-export BRAIN_SCRIPTS="$PWD/ms-ai-toolkit/brain"
+export BRAIN_SCRIPTS="$PWD/ms-ai-toolkit/brain"    # put this in your shell profile
 python3 "$PWD/ms-ai-toolkit/brain/brain-init.py"
 ```
 
-opencode auto-loads anything in `~/.config/opencode/plugin/`. The prompt is already listed in
+opencode discovers plugins with the glob `{plugin,plugins}/*.{ts,js}`, so the file has to keep
+its `.js` extension — a `.mjs` there is silently never loaded. The prompt is already listed in
 `opencode/opencode.jsonc` under `instructions`. Details and the full variable list:
 [`ms-ai-toolkit/brain/README.md`](ms-ai-toolkit/brain/README.md).
 
