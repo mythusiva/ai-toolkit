@@ -48,7 +48,7 @@ try {
 
   // --- recall through the JS transport ---
   const parts = [{ type: "text", text: "where does OtpThrottle live" }]
-  await hooks["chat.message"]({ sessionID: "s1" }, { message: {}, parts })
+  await hooks["chat.message"]({ sessionID: "s1", messageID: "msg_s1" }, { message: { id: "msg_s1" }, parts })
   const added = parts.filter((p) => p.synthetic)
   check("recall injected a synthetic part", added.length === 1, JSON.stringify(parts))
   check("injected part carries the real row",
@@ -56,28 +56,41 @@ try {
     added[0]?.text?.slice(0, 200))
 
   const p2 = [{ type: "text", text: "write me a haiku about rain" }]
-  await hooks["chat.message"]({ sessionID: "s2" }, { message: {}, parts: p2 })
+  await hooks["chat.message"]({ sessionID: "s2", messageID: "msg_s2" }, { message: { id: "msg_s2" }, parts: p2 })
   check("silent on an unrelated prompt", p2.filter((p) => p.synthetic).length === 0,
     JSON.stringify(p2))
+
+  // opencode rejects and drops any part missing id/messageID/sessionID at save (SchemaError),
+  // which silently starves the model of recall. The injected part must be a well-formed TextPart.
+  const pRecall = [{ type: "text", text: "OtpThrottle" }]
+  await hooks["chat.message"]({ sessionID: "s4", messageID: "msg_s4" }, { message: { id: "msg_s4" }, parts: pRecall })
+  const recall = pRecall.find((p) => p.synthetic)
+  check("recall part carries id", !!recall && typeof recall.id === "string" && recall.id.startsWith("prt"),
+    JSON.stringify(recall))
+  check("recall part ties to the message", !!recall && recall.messageID === "msg_s4" && recall.sessionID === "s4",
+    JSON.stringify(recall))
 
   // --- capture: idle stashes, next turn delivers ---
   await hooks.event({ event: { type: "session.idle", properties: { sessionID: "s3" } } })
   const p3 = [{ type: "text", text: "ok next question" }]
-  await hooks["chat.message"]({ sessionID: "s3" }, { message: {}, parts: p3 })
+  await hooks["chat.message"]({ sessionID: "s3", messageID: "msg_s3" }, { message: { id: "msg_s3" }, parts: p3 })
   const nudge = p3.find((p) => p.synthetic && p.text.includes("BRAIN CAPTURE"))
   check("idle queued a nudge, next turn delivered it", !!nudge,
     JSON.stringify(p3.map((p) => (p.text || "").slice(0, 80))))
   check("nudge names the helper command",
     !!nudge && nudge.text.includes("brain-note.py"), nudge?.text?.slice(0, 200))
+  check("nudge is a well-formed part too",
+    !!nudge && nudge.id?.startsWith("prt") && nudge.messageID === "msg_s3" && nudge.sessionID === "s3",
+    JSON.stringify(nudge))
 
   const p4 = [{ type: "text", text: "and another" }]
-  await hooks["chat.message"]({ sessionID: "s3" }, { message: {}, parts: p4 })
+  await hooks["chat.message"]({ sessionID: "s3", messageID: "msg_s3" }, { message: { id: "msg_s3" }, parts: p4 })
   check("nudge is delivered once, not every turn",
     !p4.some((p) => (p.text || "").includes("BRAIN CAPTURE")))
 
   await hooks.event({ event: { type: "session.idle", properties: { sessionID: "s3" } } })
   const p5 = [{ type: "text", text: "third" }]
-  await hooks["chat.message"]({ sessionID: "s3" }, { message: {}, parts: p5 })
+  await hooks["chat.message"]({ sessionID: "s3", messageID: "msg_s3" }, { message: { id: "msg_s3" }, parts: p5 })
   check("a second idle does not re-nudge the same session",
     !p5.some((p) => (p.text || "").includes("BRAIN CAPTURE")))
 

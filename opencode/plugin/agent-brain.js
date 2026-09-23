@@ -27,6 +27,7 @@
  *   BRAIN_REPO_ROOT  a directory holding your checkouts, if they share one
  *   BRAIN_DEBUG      1 to log every decision to stderr
  */
+import { randomBytes } from "node:crypto"
 import { spawn } from "node:child_process"
 import { existsSync } from "node:fs"
 import { homedir } from "node:os"
@@ -36,6 +37,24 @@ import { fileURLToPath } from "node:url"
 const HERE = dirname(fileURLToPath(import.meta.url))
 const DEBUG = process.env.BRAIN_DEBUG === "1"
 const PYTHON = process.env.BRAIN_PYTHON || "python3"
+
+// opencode validates every part we push onto the message before saving it, and a
+// part without an id/messageID/sessionID is rejected (SchemaError) and silently
+// dropped -- the model never sees the recall or nudge. It stamps those fields on
+// its own parts *before* the chat.message trigger fires, so parts we add after it
+// must carry them. Mirror the Identifier.prt_<12 hex time><16 base62> shape so the
+// ids are unique and monotonic, exactly like opencode's own.
+let partSeq = 0, partEpoch = 0
+const B62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+function partID() {
+  const now = Date.now()
+  if (now !== partEpoch) { partEpoch = now; partSeq = 0 } else partSeq = (partSeq + 1) % 0x1000
+  const ts = ((BigInt(now) << 12n) + BigInt(partSeq)).toString(16).padStart(12, "0").slice(-12)
+  const bytes = randomBytes(16)
+  let tail = ""
+  for (let i = 0; i < 16; i++) tail += B62[bytes[i] % 62]
+  return `prt_${ts}${tail}`
+}
 
 const log = (...a) => DEBUG && console.error("[agent-brain]", ...a)
 
@@ -147,8 +166,11 @@ export const AgentBrain = async ({ client, directory, worktree }) => {
       }
 
       // synthetic marks the part as something the plugin added, not something the user typed.
+      // opencode REQUIRES these keys on every part; without them the part is dropped at save
+      // and never reaches the model. input carries sessionID + messageID for this turn.
+      const messageID = input?.messageID || output?.message?.id || ""
       for (const text of inject) {
-        parts.push({ type: "text", text, synthetic: true })
+        parts.push({ id: partID(), messageID, sessionID, type: "text", text, synthetic: true })
       }
     },
 

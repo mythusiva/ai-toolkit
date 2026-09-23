@@ -9,7 +9,7 @@
 # last thing on screen should be the problem, or it gets ignored by its own author.
 set -uo pipefail
 
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 DB="${BRAIN_DB:-${BRAIN_HOME:-$HOME/.agent-brain}/brain.db}"
 STATE="${BRAIN_HOME:-$HOME/.agent-brain}"
 PY="${PYTHON:-python3}"

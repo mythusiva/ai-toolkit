@@ -46,9 +46,10 @@ load-bearing, a `.mjs` there is silently never loaded. Link the plugin and the p
 then point it at the engine:
 
 ```sh
-mkdir -p ~/.config/opencode/plugin ~/.config/opencode/prompts
+mkdir -p ~/.config/opencode/plugin ~/.config/opencode/prompts ~/.agent-brain
 ln -s "$PWD/opencode/plugin/agent-brain.js"   ~/.config/opencode/plugin/
 ln -s "$PWD/opencode/prompts/agent-brain.md"  ~/.config/opencode/prompts/
+ln -s "$PWD/ms-ai-toolkit/brain"              ~/.agent-brain/brain   # so the skill's $BRAIN resolves
 export BRAIN_SCRIPTS="$PWD/ms-ai-toolkit/brain"   # unnecessary if the repo's opencode/
 python3 "$PWD/ms-ai-toolkit/brain/brain-init.py"  # dir is itself the symlink target
 ```
