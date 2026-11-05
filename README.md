@@ -4,7 +4,9 @@ Personal AI coding-agent config, kept in one place.
 
 - **`ms-ai-toolkit/`** — the Claude Code setup, packaged as a plugin. This repo is its own
   marketplace (`ms-ai`, via `.claude-plugin/marketplace.json` at the root).
-- **`opencode/`** — opencode config (`opencode.jsonc`, `tui.json`, prompts, plugins).
+- **`opencode/`** — opencode config (`opencode.jsonc`, `tui.json`, prompts, plugins), plus
+  skills (`handoff`, `director`, `authoring`), agents (`judge`, `scout`) and commands
+  (`/handoff`, `/director-tick`).
 
 The **agent brain** — a SQLite working memory that agents read before they grep and write to the
 moment they learn something — runs on both, from one shared engine in
@@ -49,6 +51,41 @@ opencode discovers plugins with the glob `{plugin,plugins}/*.{ts,js}`, so the fi
 its `.js` extension — a `.mjs` there is silently never loaded. The prompt is already listed in
 `opencode/opencode.jsonc` under `instructions`. Details and the full variable list:
 [`ms-ai-toolkit/brain/README.md`](ms-ai-toolkit/brain/README.md).
+
+### Skills, agents and commands
+
+```
+mkdir -p ~/.config/opencode/skills ~/.config/opencode/agents ~/.config/opencode/commands
+for d in opencode/skills/*/;   do ln -s "$PWD/$d" ~/.config/opencode/skills/; done
+for f in opencode/agents/*.md;   do ln -s "$PWD/$f" ~/.config/opencode/agents/; done
+for f in opencode/commands/*.md; do ln -s "$PWD/$f" ~/.config/opencode/commands/; done
+```
+
+opencode finds these by directory, so nothing goes in `opencode.jsonc`. A skill's folder name must
+equal the `name:` in its `SKILL.md`.
+
+| Piece | What it does |
+|---|---|
+| `handoff` skill + `/handoff` | At ~300K tokens of context, writes notes, starts a successor session with a standalone brief, and retires this one |
+| `director` skill + `/director-tick` | A long-lived coordinator session: rules, a tick checklist, a crontab schedule that follows the current director across handoffs, an away mode and a Matrix away channel |
+| `authoring` skill | Writing rules for docs, PR descriptions, posts and decks: a counted 3-minute reading budget, diagrams first, a plain opener |
+| `judge` agent | Approves or rejects a plan or claim; needs each premise's evidence inline. Point it at your strongest model |
+| `scout` agent | One read-only lookup at a time. Point it at your cheapest model |
+
+Pin models per agent with `model: provider/model-id` in its frontmatter, or under `agent` in
+`opencode.jsonc`. The existing `general` agent is the worker for edits.
+
+Session handling assumes the `agent-manager` CLI is installed (`spawn`, `send`,
+`archive-self`, `kill-self`). The director's first run:
+
+```
+export DIRECTOR_HOME=~/.director
+mkdir -p "$DIRECTOR_HOME" && cp -n opencode/skills/director/templates/*.md "$DIRECTOR_HOME/"
+~/.config/opencode/skills/director/scripts/install-schedule.sh   # crontab rows from schedule.md
+```
+
+The away channel needs `MATRIX_HOMESERVER`, `MATRIX_OWNER`, `MATRIX_USER` and `MATRIX_PASSWORD`
+in your shell profile, then `mx.py login` and `mx.py room` once.
 
 Previously this repo shipped a `claude/` directory you `cp`'d into `~/.claude/` and merged
 into `settings.json` by hand. That's gone — if you still have those entries, remove them
