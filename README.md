@@ -67,7 +67,7 @@ equal the `name:` in its `SKILL.md`.
 | Piece | What it does |
 |---|---|
 | `handoff` skill + `/handoff` | At ~300K tokens of context, writes notes, starts a successor session with a standalone brief, and retires this one |
-| `director` skill + `/director-tick` | A long-lived coordinator session: rules, a tick checklist, a crontab schedule that follows the current director across handoffs, an away mode and a Matrix away channel |
+| `director` skill + `/director-tick` | A long-lived coordinator session: rules, a tick checklist, a crontab schedule that follows the current director across handoffs, and Matrix as a second chat channel |
 | `authoring` skill | Writing rules for docs, PR descriptions, posts and decks: a counted 3-minute reading budget, diagrams first, a plain opener |
 | `judge` agent | Approves or rejects a plan or claim; needs each premise's evidence inline. Point it at your strongest model |
 | `scout` agent | One read-only lookup at a time. Point it at your cheapest model |
@@ -84,7 +84,7 @@ mkdir -p "$DIRECTOR_HOME" && cp -n opencode/skills/director/templates/*.md "$DIR
 ~/.config/opencode/skills/director/scripts/install-schedule.sh   # crontab rows from schedule.md
 ```
 
-The away channel needs `MATRIX_HOMESERVER`, `MATRIX_OWNER`, `MATRIX_USER` and `MATRIX_PASSWORD`
+The Matrix channel needs `MATRIX_HOMESERVER`, `MATRIX_OWNER`, `MATRIX_USER` and `MATRIX_PASSWORD`
 in your shell profile, then `mx.py login` and `mx.py room` once.
 
 Previously this repo shipped a `claude/` directory you `cp`'d into `~/.claude/` and merged

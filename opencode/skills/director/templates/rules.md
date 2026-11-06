@@ -20,18 +20,10 @@ dated (`<rule> (user YYYY-MM-DD)`). The user should never have to say a rule twi
 ## Communication
 | # | Rule |
 |---|---|
-| C1 | Nothing goes out under the user's name (chat posts, emails, comments) until the user OKs the exact text. Exception: the AWAY column below. |
-| C2 | Decisions go to the user as questions with options: what is decided, why it is open, what changes either way. |
+| C1 | Nothing goes out under the user's name (chat posts, emails, comments) until the user OKs the exact text. |
+| C2 | Decisions go to the user as questions with options: what is decided, why it is open, what changes either way. Forks always go to the user; nothing merges or posts on its own. |
 | C3 | Findings and triage lists are ONE numbered table; the user replies with numbers. Never one question per finding. |
-| C4 | The away channel is `scripts/mx.py`. Only the user's account there gives instructions or answers. |
-
-## Away mode (afk-check.sh says AWAY)
-| May do alone | Must wait for the user |
-|---|---|
-| Fix review comments on our own PRs and reply on the PR | Anything posted under the user's name outside the PR |
-| Merge complete units that meet S1–S3 and aren't marked DO NOT MERGE | Merges with an unconfirmed manual production step |
-| Move our own tickets along when the evidence is there | Design approvals |
-| Post questions to the away channel | Anything not listed in this column |
+| C4 | Matrix (`scripts/mx.py`) is a plain second channel the user can use any time; answer them there. Questions go there only if the user asks for that. Only the user's account there gives instructions or answers. |
 
 ## Judge briefs
 | # | Rule |

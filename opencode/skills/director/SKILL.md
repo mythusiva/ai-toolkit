@@ -1,24 +1,24 @@
 ---
 name: director
-description: Run a long-lived "director" session that coordinates your other agent sessions, wakes on a schedule to look for work, acts on its own when you are away, and survives its own handoffs without losing rules or schedules. Use when the user asks to set up, start, run, tick, or hand off a director, a coordinator, a manager session, or "something that keeps working while I'm away".
+description: Run a long-lived "director" session that coordinates your other agent sessions, wakes on a schedule to look for work and brings every decision to you, and survives its own handoffs without losing rules or schedules. Use when the user asks to set up, start, run, tick, or hand off a director, a coordinator, or a manager session.
 ---
 
 # Director
 
 A director is one agent session whose job is coordination, not coding. It relays between you and
 worker sessions, wakes every 30 minutes to find the next useful step toward the current goal, and
-acts within written limits when you are away. Like a shift lead with a binder: the binder (rules,
+brings every fork (a decision with more than one option) to you. Like a shift lead with a binder: the binder (rules,
 tick checklist, schedule, log) outlives any one shift, so a new director picks up exactly where the
 last one stopped.
 
 ```
            system crontab                       you
-               │ every 30 min                    │ chat / away channel
+               │ every 30 min                    │ chat / Matrix      
                ▼                                 ▼
         scripts/tick.sh ──agent-manager send──▶ DIRECTOR ──spawn/send──▶ worker sessions
                │ reads director.id                 │
                │                                   ├─ reads  rules.md, tick.md
-               │                                   └─ writes handoff-log.md, last-human
+               │                                   └─ writes handoff-log.md
                ▼
         $DIRECTOR_HOME/director.id  ◀── each new director writes its own id here
 ```
@@ -40,7 +40,6 @@ mkdir -p "$DIRECTOR_HOME" && cp -n templates/*.md "$DIRECTOR_HOME/"
 | `schedule.md` | The only list of scheduled wake-ups | Director, the same turn a schedule changes |
 | `handoff-log.md` | Append-only: one line per tick, one `## Handoff` section per handoff | Director |
 | `director.id` | The current director's session id; the scheduler reads it | Each new director at startup |
-| `last-human` | Unix time of the user's last real message | Director, on every real user message |
 
 ## Startup (every new director, in order)
 
@@ -52,13 +51,12 @@ mkdir -p "$DIRECTOR_HOME" && cp -n templates/*.md "$DIRECTOR_HOME/"
 4. Send your new id to every session the handoff lists as reporting to the director.
 5. Read the predecessor's screen (`agent-manager read <old id>`) for anything the user typed after
    the handoff was written. Then the predecessor retires (see the `handoff` skill).
-6. `date +%s > "$DIRECTOR_HOME/last-human"`, then work the handoff's open items.
+6. Work the handoff's open items.
 
 ## Every real user message
 
-`date +%s > "$DIRECTOR_HOME/last-human"`. Scheduler wake-ups, pasted logs and session relays are
-not the user and don't count. When the user states a new standing rule, append it to `rules.md`
-in the same turn, dated.
+When the user states a new standing rule, append it to `rules.md` in the same turn, dated.
+Scheduler wake-ups, pasted logs and session relays are not the user and don't count.
 
 ## Tick
 
@@ -66,16 +64,15 @@ Run `tick.md` top to bottom. The two invariants: **never just wait for relays** 
 does the next step toward the goal), and **log one line per tick** in `handoff-log.md` saying what
 moved.
 
-## Away mode
+## Forks and the Matrix channel
 
-`scripts/afk-check.sh` prints `AWAY` or `PRESENT`. Away = no real user message for 2 h **and** a
-9-minute desktop dialog went unanswered. The `AWAY` column of `rules.md` lists what the director
-may do alone; everything else waits. Questions for the user go to the away channel
-(`scripts/mx.py post`, Matrix) and get added to the handoff's open list as `pending-q <topic>`, so a
-successor keeps asking. Each tick runs `scripts/mx.py read`; the user's numbered reply is the answer.
+Every fork goes to the user as a question (rules C2). The director never merges or posts on its
+own; it executes what the user decides. An unanswered question goes on the handoff's open list as
+`pending-q <topic>`, so a successor keeps asking.
 
-Never park the session on a blocking question while away: a pending question stops the session,
-and with it every scheduled tick.
+Matrix (`scripts/mx.py`) is a plain second channel the user can use any time, not a mode. Each
+tick runs `scripts/mx.py read`; answer the user there when they write there. Questions go to
+Matrix only if the user asks for that.
 
 ## Scheduling
 

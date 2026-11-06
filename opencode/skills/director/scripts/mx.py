@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Director <-> user over Matrix, the away channel.
+"""Director <-> user over Matrix, a plain second channel the user can use any time.
 
 Usage: mx.py login | room | post "<text>" | read
 
